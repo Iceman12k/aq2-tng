@@ -120,6 +120,11 @@ SHLIBLIBS=-luuid -lcurl
 endif
 endif
 
+LUA_CFLAGS = $(shell pkg-config lua5.4 --cflags)
+LUA_LIBS = $(shell pkg-config lua5.4 --libs)
+CFLAGS += $(LUA_CFLAGS) -Llibs
+SHLIBLIBS += $(LUA_LIBS)
+
 ifeq ($(ARCH),x86)
 CFLAGS+=-m32
 endif
@@ -140,7 +145,7 @@ endif
 GAME_OBJS = \
 	a_cmds.o a_ctf.o a_doorkick.o a_game.o a_items.o a_match.o \
 	a_menu.o a_radio.o a_team.o a_tourney.o a_vote.o a_xcmds.o a_xgame.o \
-	a_xmenu.o a_xvote.o cgf_sfx_glass.o g_chase.o g_cmds.o \
+	a_xmenu.o a_xvote.o cgf_sfx_glass.o g_chase.o g_cmds.o g_lua.o \
 	g_combat.o g_func.o g_items.o g_main.o g_misc.o g_ext.o \
 	g_phys.o g_save.o g_spawn.o g_svcmds.o g_target.o g_trigger.o \
 	g_utils.o g_weapon.o \

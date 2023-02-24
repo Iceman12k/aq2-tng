@@ -7,7 +7,6 @@
 
 #include "g_local.h"
 #include "q_ghud.h"
-
 #ifdef AQTION_EXTENSION
 //
 // Reki
@@ -37,6 +36,8 @@ extension_func_t *g_extension_funcs;
 int(*engine_Client_GetVersion)(edict_t *ent);
 int(*engine_Client_GetProtocol)(edict_t *ent);
 
+void(*engine_Pmove_AddField)(char *name, int size);
+
 void(*engine_Ghud_SendUpdates)(edict_t *ent);
 int(*engine_Ghud_NewElement)(int type);
 void(*engine_Ghud_SetFlags)(int i, int val);
@@ -61,7 +62,7 @@ int G_customizeentityforclient(edict_t *client, edict_t *ent, entity_state_t *st
 	// first check visibility masks
 	if (!(max(1, ent->dimension_visible) & max(1, client->client->dimension_observe)))
 		return false;
-	
+
 	if (ent->client) // client specific changes
 	{
 		if ((int)use_newirvision->value)
@@ -182,8 +183,19 @@ void* G_FetchGameExtension(char *name)
 }
 
 
-
-
+//
+// Pmove Extensions
+//
+void G_InitPmoveFields(void)
+{
+	pmove_extfields = 0;
+	#define PME_I(field) Pmove_AddField(#field, sizeof(((pmoveExtend_t *)0)->field));
+	#define PME_F(field) Pmove_AddField(#field, sizeof(((pmoveExtend_t *)0)->field));
+	#define PME_S(field) Pmove_AddField(#field, sizeof(((pmoveExtend_t *)0)->field));
+	#define PME_B(field) Pmove_AddField(#field, sizeof(((pmoveExtend_t *)0)->field));
+	#define PME_V(field) Pmove_AddField(#field, sizeof(((pmoveExtend_t *)0)->field));
+	PMOVE_EXT_FIELDS
+}
 
 
 // 
@@ -210,6 +222,18 @@ int Client_GetProtocol(edict_t *ent)
 }
 
 
+//
+// dynamic pmove fields
+//
+int pmove_extfields;
+void Pmove_AddField(char *name, int size)
+{
+	if (!engine_Pmove_AddField)
+		return;
+
+	pmove_extfields++;
+	engine_Pmove_AddField(name, size);
+}
 
 //
 // game hud

@@ -270,6 +270,7 @@
 
 #include <time.h>
 #include "g_local.h"
+#include "g_lua.h"
 
 game_locals_t game;
 level_locals_t level;
@@ -594,6 +595,8 @@ game_export_t *GetGameAPI (game_import_t * import)
 	engine_Client_GetProtocol = gi.CheckForExtension("Client_GetProtocol");
 	engine_Client_GetVersion = gi.CheckForExtension("Client_GetVersion");
 
+	engine_Pmove_AddField = gi.CheckForExtension("Pmove_AddField");
+
 	engine_Ghud_SendUpdates = gi.CheckForExtension("Ghud_SendUpdates");
 	engine_Ghud_NewElement = gi.CheckForExtension("Ghud_NewElement");
 	engine_Ghud_SetFlags = gi.CheckForExtension("Ghud_SetFlags");
@@ -604,8 +607,11 @@ game_export_t *GetGameAPI (game_import_t * import)
 	engine_Ghud_SetAnchor = gi.CheckForExtension("Ghud_SetAnchor");
 	engine_Ghud_SetColor = gi.CheckForExtension("Ghud_SetColor");
 	engine_Ghud_SetSize = gi.CheckForExtension("Ghud_SetSize");
+
+	G_InitPmoveFields();
 #endif
 
+	lua_init();
 
 	return &globals;
 }

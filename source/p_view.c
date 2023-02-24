@@ -282,7 +282,7 @@ Auto pitching on slopes?
 
 ===============
 */
-void SV_CalcViewOffset (edict_t * ent)
+void SV_CalcViewOffset(edict_t * ent)
 {
 	float *angles;
 	float bob;
@@ -307,6 +307,7 @@ void SV_CalcViewOffset (edict_t * ent)
 	}
 	else
 	{
+#ifndef AQTION_EXTENSION
 		// add angles based on weapon kick
 		VectorCopy (ent->client->kick_angles, angles);
 
@@ -345,6 +346,7 @@ void SV_CalcViewOffset (edict_t * ent)
 		if (bobcycle & 1)
 			delta = -delta;
 		angles[ROLL] += delta;
+#endif
 	}
 
 	//===================================
@@ -390,6 +392,7 @@ void SV_CalcGunOffset (edict_t * ent)
 	if (!FRAMESYNC)
 		return;
 
+#ifndef AQTION_EXTENSION
 	// gun angles from bobbing
 	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005;
 	ent->client->ps.gunangles[YAW] = xyspeed * bobfracsin * 0.01;
@@ -430,6 +433,7 @@ void SV_CalcGunOffset (edict_t * ent)
 		ent->client->ps.gunoffset[i] += right[i] * gun_x->value;
 		ent->client->ps.gunoffset[i] += up[i] * (-gun_z->value);
 	}
+#endif
 
 	VectorCopy( ent->client->ps.viewangles, ent->client->oldviewangles );
 }
@@ -1468,6 +1472,7 @@ void ClientEndServerFrame (edict_t * ent)
 	// all cyclic walking effects
 	//
 	//if (FRAMESYNC)
+#ifndef AQTION_EXTENSION
 	{
 		xyspeed = sqrtf(ent->velocity[0]*ent->velocity[0] + ent->velocity[1]*ent->velocity[1]);
 
@@ -1497,6 +1502,7 @@ void ClientEndServerFrame (edict_t * ent)
 		bobcycle = (int) current_client->bobtime;
 		bobfracsin = fabsf (sinf (current_client->bobtime * M_PI));
 	}
+#endif
 
 	// detect hitting the floor
 	P_FallingDamage (ent);
@@ -1626,3 +1632,76 @@ void ClientEndServerFrame (edict_t * ent)
 
 	RadioThink(ent);
 }
+
+
+#if 0
+void PM_ClientBob(edict_t *ent, pmove_t *pm, const usercmd_t *cmd)
+{
+	current_client = ent->client;
+
+	//
+	// calculate speed and cycle to be used for
+	// all cyclic walking effects
+	//
+	//if (FRAMESYNC)
+	{
+		xyspeed = sqrtf((pm->s.velocity[0] * pm->s.velocity[0] * 0.0125) + (pm->s.velocity[1] * pm->s.velocity[1] * 0.0125));
+
+		//if (xyspeed < 5 || ent->solid == SOLID_NOT)
+		if (xyspeed < 5)
+		{
+			bobmove = 0;
+			pmoveExt(pm->s)->bobtime = 0;	// start at beginning of cycle again
+		}
+		else if (pm->groundentity)
+		{	// so bobbing only cycles when on ground
+			if (xyspeed > 210)
+				bobmove = 0.25;
+			else if (xyspeed > 100)
+				bobmove = 0.125;
+			else
+				bobmove = 0.0625;
+		}
+		else
+			bobmove = 0;
+
+		//bobmove /= game.framediv;
+		bobmove *= ((float)cmd->msec / 100);
+		if (pm->s.pm_flags & PMF_DUCKED)
+			bobmove *= 4;
+		
+		pmoveExt(pm->s)->bobtime += bobmove;
+		current_client->bobtime = pmoveExt(pm->s)->bobtime;
+
+		bobcycle = (int)current_client->bobtime;
+		bobfracsin = fabsf(sinf(current_client->bobtime * M_PI));
+
+
+		// add angles based on velocity
+		float delta;
+		vec3_t angles;
+		VectorClear(angles);
+		delta = DotProduct(ent->velocity, forward);
+		angles[PITCH] += delta * run_pitch->value;
+
+		delta = DotProduct(ent->velocity, right);
+		angles[ROLL] += delta * run_roll->value;
+
+		// add angles based on bob
+		delta = bobfracsin * bob_pitch->value * xyspeed;
+		if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
+			delta *= 6;		// crouching
+		angles[PITCH] += delta;
+		delta = bobfracsin * bob_roll->value * xyspeed;
+		if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
+			delta *= 6;		// crouching
+		if (bobcycle & 1)
+			delta = -delta;
+		angles[ROLL] += delta;
+
+		VectorCopy(angles, pmoveExt(pm->s)->move_angles);
+	}
+}
+#endif
+
+

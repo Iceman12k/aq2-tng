@@ -13,7 +13,7 @@
 //
 //-----------------------------------------------------------------------------
 #ifdef AQTION_EXTENSION
-#define GAME_API_VERSION        4
+#define GAME_API_VERSION        0xAC7105
 #else
 #define GAME_API_VERSION        3
 #endif

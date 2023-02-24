@@ -647,6 +647,9 @@ pmtype_t;
 #ifdef AQTION_EXTENSION
 // pmove->pm_aq2_flags
 #define PMF_AQ2_LIMP		0x01 // used to predict limping
+#define PMF_AQ2_NOJUMP		0x02 // no jumping
+#define PMF_AQ2_NOACCEL		0x04 // no acceleration
+#define PMG_AQ2_NOMOVE		0x06 // no move
 #endif
 
 // this structure needs to be communicated bit-accurate
@@ -673,6 +676,8 @@ typedef struct
   short     pm_aq2_flags;   // limping, bandaging, etc
   unsigned short pm_timestamp; // timestamp, resets every 60 seconds
   byte		pm_aq2_leghits;		 // number of leg hits
+
+  byte		efields[128];		// extended fields, created at runtime by the game logic
 #endif
 }
 pmove_state_t;

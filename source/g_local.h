@@ -1164,9 +1164,11 @@ extern cvar_t *e_enhancedSlippers;
 #ifdef AQTION_EXTENSION
 extern int (*engine_Client_GetVersion)(edict_t *ent);
 extern int (*engine_Client_GetProtocol)(edict_t *ent);
-
 int Client_GetVersion(edict_t *ent);
 int Client_GetProtocol(edict_t *ent);
+
+extern void(*engine_Pmove_AddField)(char *name, int size);
+void Pmove_AddField(char *name, int size);
 
 extern void (*engine_Ghud_SendUpdates)(edict_t *ent);
 extern int(*engine_Ghud_NewElement)(int type);
@@ -1406,7 +1408,39 @@ void ClientBeginServerFrame (edict_t * ent);
 #ifdef AQTION_EXTENSION
 void G_InitExtEntrypoints(void);
 void* G_FetchGameExtension(char *name);
+
+extern int pmove_extfields;
+#define pmoveExt(n) ((pmoveExtend_t*)n.efields)
+#define PMOVE_EXT_FIELDS	\
+	PME_I(weapon)			\
+	PME_I(health)			\
+	PME_F(bobtime)			\
+	PME_S(kickang_x)		\
+	PME_S(kickang_y)		\
+	PME_S(kickang_z)		\
+	PME_S(oldviewang)		\
+	PME_S(oldviewang1)		\
+	PME_S(oldviewang2)
+	
+typedef struct
+{
+	#define PME_I(field) int field;
+	#define PME_F(field) float field;
+	#define PME_S(field) short field;
+	#define PME_B(field) byte field;
+	#define PME_V(field) vec3_t field;
+	PMOVE_EXT_FIELDS
+} pmoveExtend_t;
 #endif
+
+//
+// g_lua.c
+//
+#ifdef AQTION_EXTENSION
+void lua_pmoverun(pmove_t *pm);
+void lua_psrun(player_state_t *ps, pmove_t *pm);
+#endif
+
 
 //
 // g_player.c
@@ -1430,6 +1464,9 @@ qboolean Ban_TeamKiller (edict_t * ent, int rounds);
 void ClientEndServerFrame (edict_t * ent);
 void SetAnimation( edict_t *ent, int frame, int anim_end, int anim_priority );
 qboolean OnLadder( edict_t *ent );
+#ifdef AQTION_EXTENSION
+//void PM_ClientBob(edict_t *ent, pmove_t *pm, const usercmd_t *cmd);
+#endif
 
 //
 // p_hud.c

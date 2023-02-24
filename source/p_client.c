@@ -382,9 +382,11 @@ void Add_Frag(edict_t * ent, int mod)
 				CenterPrintAll(buf);
 				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 					 gi.soundindex("tng/impressive.wav"), 1.0, ATTN_NONE, 0.0);
+#ifdef USE_AQTION
 				if (stat_logs->value && !ltk_loadbots->value) {
 					LogAward(steamid, discordid, IMPRESSIVE);
 				}
+#endif
 			}
 			else if (ent->client->resp.streakKills % 12 == 0 && use_rewards->value)
 			{
@@ -392,9 +394,11 @@ void Add_Frag(edict_t * ent, int mod)
 				CenterPrintAll(buf);
 				gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD,
 					 gi.soundindex("tng/excellent.wav"), 1.0, ATTN_NONE, 0.0);
+#ifdef USE_AQTION
 				if (stat_logs->value && !ltk_loadbots->value) {
 					LogAward(steamid, discordid, EXCELLENT);
 				}
+#endif
 			}
 		}
 
@@ -817,9 +821,11 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			PrintDeathMessage(death_msg, self);
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(self->client->attacker, self);
+#ifdef USE_AQTION
 			if (stat_logs->value && !ltk_loadbots->value) { // Only create stats logs if stat_logs is 1 and ltk_loadbots is 0
 				LogKill(self, inflictor, self->client->attacker);
 			}
+#endif
 			self->client->attacker->client->radio_num_kills++;
 
 			//MODIFIED FOR FF -FB
@@ -852,9 +858,11 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 
 			self->enemy = NULL;
 
+#ifdef USE_AQTION
 			if (stat_logs->value && !ltk_loadbots->value) { // Only create stats logs if stat_logs is 1 and ltk_loadbots is 0
 				LogWorldKill(self);
 			}
+#endif
 		}
 		return;
 	}
@@ -1187,9 +1195,11 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 			PrintDeathMessage(death_msg, self);
 			IRC_printf(IRC_T_KILL, death_msg);
 			AddKilledPlayer(attacker, self);
+#ifdef USE_AQTION
 			if (stat_logs->value && !ltk_loadbots->value) { // Only create stats logs if stat_logs is 1 and ltk_loadbots is 0
 				LogKill(self, inflictor, attacker);
 			}
+#endif
 
 			if (friendlyFire) {
 				if (!teamplay->value || team_round_going || !ff_afterround->value)
@@ -1214,9 +1224,11 @@ void ClientObituary(edict_t * self, edict_t * inflictor, edict_t * attacker)
 	sprintf(death_msg, "%s died\n", self->client->pers.netname);
 	PrintDeathMessage(death_msg, self);
 	IRC_printf(IRC_T_DEATH, death_msg);
+	#ifdef USE_AQTION
 	if (stat_logs->value && !ltk_loadbots->value) { // Only create stats logs if stat_logs is 1 and ltk_loadbots is 0
 		LogWorldKill(self);
 	}
+	#endif
 
 	Subtract_Frag(self);	//self->client->resp.score--;
 	Add_Death( self, true );
@@ -2455,6 +2467,9 @@ void PutClientInServer(edict_t * ent)
 		client->arrow->classname = "ind_arrow";
 		client->arrow->owner = ent;
 	}
+
+	// resync pm_timestamp so all limps are roughly synchronous, to try to maintain original behavior
+	client->ps.pmove.pm_timestamp = (int)(level.time * 1000) % 60000;
 #endif
 
 	// zucc vwep
@@ -3329,10 +3344,23 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 		}
 		#endif
 
+#ifdef AQTION_EXTENSION
+		pmoveExt(pm.s)->weapon = client->curr_weap;
+		pmoveExt(pm.s)->health = ent->health;
+#endif
+
 		pm.trace = PM_trace;	// adds default parms
 		pm.pointcontents = gi.pointcontents;
 		// perform a pmove
+#ifdef AQTION_EXTENSION
+		lua_pmoverun(&pm);
+#endif
 		gi.Pmove(&pm);
+
+#ifdef AQTION_EXTENSION
+		//PM_ClientBob(ent, &pm, ucmd);
+		//gi.dprintf("bobtime: %g\n", pmoveExt(client->ps.pmove)->bobtime);
+#endif
 
 		//FB 6/3/99 - info from Mikael Lindh from AQ:G
 		if (pm.maxs[2] == 4) {
@@ -3398,6 +3426,7 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 			kick_attack( ent );
 			client->punch_desired = false;
 		}
+		
 
 		// touch other objects
 		for (i = 0; i < pm.numtouch; i++) {
@@ -3450,6 +3479,39 @@ void ClientThink(edict_t * ent, usercmd_t * ucmd)
 		}
 	}
 
+#ifdef AQTION_EXTENSION
+	vec3_t v_kick;
+	float ratio;
+	VectorCopy(client->kick_angles, v_kick);
+
+	// add angles based on weapon kick
+	VectorCopy(ent->client->kick_angles, v_kick);
+
+	// add angles based on damage kick
+	ratio = (ent->client->v_dmg_time - level.time) / DAMAGE_TIME;
+	if (ratio < 0)
+	{
+		ratio = 0;
+		ent->client->v_dmg_pitch = 0;
+		ent->client->v_dmg_roll = 0;
+	}
+	v_kick[PITCH] += ratio * ent->client->v_dmg_pitch;
+	v_kick[ROLL] += ratio * ent->client->v_dmg_roll;
+
+	// add pitch based on fall kick
+	ratio = (ent->client->fall_time - level.time) / FALL_TIME;
+	if (ratio < 0)
+		ratio = 0;
+	v_kick[PITCH] += ratio * ent->client->fall_value;
+
+
+	pmoveExt(client->ps.pmove)->kickang_x = v_kick[0] * 100;
+	pmoveExt(client->ps.pmove)->kickang_y = v_kick[1] * 100;
+	pmoveExt(client->ps.pmove)->kickang_z = v_kick[2] * 100;
+
+	lua_psrun(&client->ps, &pm);
+#endif
+
 	if( ucmd->forwardmove || ucmd->sidemove || client->oldbuttons != client->buttons
 		|| (ent->solid == SOLID_NOT && ent->deadflag != DEAD_DEAD) )  // No idle noises at round start.
 		client->resp.idletime = 0;
@@ -3478,10 +3540,6 @@ void ClientBeginServerFrame(edict_t * ent)
 		antilag_update(ent);
 
 #ifdef AQTION_EXTENSION
-	// resync pm_timestamp so all limps are roughly synchronous, to try to maintain original behavior
-	unsigned short world_timestamp = (int)(level.time * 1000) % 60000;
-	client->ps.pmove.pm_timestamp = world_timestamp;
-
 	// network any pending ghud updates
 	Ghud_SendUpdates(ent);
 
