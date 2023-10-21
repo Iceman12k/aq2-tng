@@ -79,7 +79,15 @@ int G_customizeentityforclient(edict_t *clent, edict_t *ent, entity_state_t *sta
 			if (teamplay->value && (ent->client->resp.team == clent->client->resp.team))
 				state->renderfx &= ~RF_IR_VISIBLE;
 		}
+
+		if (ent->s.modelindex == 255 && (clent->client->dimension_observe & DIMENSION_HDMODE))
+		{
+			state->modelindex = 0;
+		}
 	}
+
+	if (ent->hdm_flags == HDMODE_ASSET && ent->owner == clent)
+		return false;
 
 	if (!strcmp(ent->classname, "ind_arrow"))
 	{
@@ -236,6 +244,10 @@ void G_CvarSync_Updated(int index, edict_t *clent)
 				client->pers.spec_flags |= SPECFL_KILLFEED;
 			else
 				client->pers.spec_flags &= ~SPECFL_KILLFEED;
+			break;
+
+		case clcvar_cl_hdmode:
+			client->pers.cl_hdmode = val_i;
 			break;
 	}
 }

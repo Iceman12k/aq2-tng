@@ -319,7 +319,7 @@
 #include "g_local.h"
 #include "m_player.h"
 #include "cgf_sfx_glass.h"
-
+#include "md3.h"
 
 static void FreeClientEdicts(gclient_t *client)
 {
@@ -378,8 +378,10 @@ void Announce_Reward(edict_t *ent, int rewardType){
 		gi.sound(&g_edicts[0], CHAN_VOICE | CHAN_NO_PHS_ADD, gi.soundindex("tng/accuracy.wav"), 1.0, ATTN_NONE, 0.0);
 	}
 
+	#ifdef USE_AQTION
 	if (stat_logs->value)
 		LogAward(steamid, discordid, rewardType);
+	#endif
 }
 
 void Add_Frag(edict_t * ent, int mod)
@@ -1594,6 +1596,13 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	self->deadflag = DEAD_DEAD;
 	gi.linkentity(self);
 
+#ifdef AQTION_EXTENSION
+	if (self->hdm_legs) // restart leg state
+		HDMode_PlayerL_Death(self->hdm_legs);
+	if (self->hdm_torso) // restart torso state
+		HDMode_PlayerT_Death(self->hdm_torso);
+#endif
+
 	// in ctf, when a player dies check if he should be moved to the other team
 	if(ctf->value)
 		CheckForUnevenTeams(self);
@@ -2350,6 +2359,12 @@ void PutClientInServer(edict_t * ent)
 #ifdef AQTION_EXTENSION
 	cvarsyncvalue_t cl_cvar[CVARSYNC_MAX];
 #endif
+
+	ent->hdm_flags = HDMODE_PLAYER;
+	if (ent->hdm_legs) // restart leg state
+		HDMode_PlayerL_State(ent->hdm_legs);
+	if (ent->hdm_torso) // restart torso state
+		HDMode_PlayerT_State(ent->hdm_torso);
 
 	// find a spawn point
 	// do it before setting health back up, so farthest
@@ -3553,6 +3568,9 @@ void ClientBeginServerFrame(edict_t * ent)
 
 	// update dimension mask for team-only entities
 	client->dimension_observe = 1 | (1 << client->resp.team);
+
+	if (client->pers.cl_hdmode)
+		client->dimension_observe |= DIMENSION_HDMODE;
 
 	if (client->resp.hud_type == 1)
 	{

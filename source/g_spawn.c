@@ -153,7 +153,7 @@
 //-----------------------------------------------------------------------------
 
 #include "g_local.h"
-
+#include "md3.h"
 
 typedef struct
 {
@@ -162,6 +162,9 @@ typedef struct
 }
 spawn_t;
 
+edict_t *test_legs;
+edict_t *test_torso;
+edict_t *test_head;
 
 void SP_item_health (edict_t * self);
 void SP_item_health_small (edict_t * self);
@@ -1763,6 +1766,14 @@ void SP_worldspawn (edict_t * ent)
 
 	sm_meat_index = gi.modelindex("models/objects/gibs/sm_meat/tris.md2");
 	gi.modelindex("models/objects/gibs/skull/tris.md2");
+
+
+	gi.modelindex("models/grunt/lower.md2");
+	gi.modelindex("models/grunt/upper.md2");
+	gi.modelindex("models/grunt/head.md2");
+	MD3_LoadModel("models/grunt/lower.md3");
+	MD3_LoadModel("models/grunt/upper.md3");
+	MD3_LoadModel("models/grunt/head.md3");
 
 
 //

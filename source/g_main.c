@@ -1171,6 +1171,8 @@ void G_RunFrame (void)
 			G_RunEntity (ent);
 		}
 
+		HDMode_HandleReplacements();
+
 		// see if it is time to end a deathmatch
 		CheckDMRules ();
 	}

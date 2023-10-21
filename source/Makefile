@@ -90,7 +90,7 @@ endif
 
 ifdef WIN64
 CC=x86_64-w64-mingw32-gcc
-CFLAGS+=-DWIN64 -m64
+CFLAGS+=-DWIN64 -m64 -DAQTION_EXTENSION
 ARCH=x86_64
 SHLIBEXT=dll
 SHLIBLIBS=-lws2_32
@@ -151,7 +151,7 @@ GAME_OBJS = \
 	a_xmenu.o a_xvote.o cgf_sfx_glass.o g_chase.o g_cmds.o \
 	g_combat.o g_func.o g_items.o g_main.o g_misc.o g_ext.o \
 	g_phys.o g_save.o g_spawn.o g_svcmds.o g_target.o g_trigger.o \
-	g_utils.o g_weapon.o \
+	g_utils.o g_weapon.o g_md3.o g_hdmode.o \
 	p_antilag.o p_client.o p_hud.o p_view.o p_weapon.o q_shared.o \
 	tng_stats.o tng_flashlight.o tng_irc.o tng_ini.o tng_balancer.o \
 	g_grapple.o a_dom.o tng_jump.o

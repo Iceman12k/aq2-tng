@@ -273,6 +273,17 @@ float anglemod (float a)
   return (360.0 / 65536) * ((int) (a * (65536 / 360.0)) & 65535);
 }
 
+int anglediff(int x, int y)
+{
+	int a;
+	a = x - y;
+	a = (a + 180) % 360 - 180;
+	if (a > 180) a -= 360;
+	if (a < -180) a += 360;
+
+	return a;
+}
+
 // this is the slow, general version
 int
 BoxOnPlaneSide2 (vec3_t emins, vec3_t emaxs, struct cplane_s *p)

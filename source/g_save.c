@@ -692,6 +692,7 @@ void InitGame( void )
 	CvarSync_Set(clcvar_cl_xerp, "cl_xerp", "0");
 	CvarSync_Set(clcvar_cl_spectatorhud, "cl_spectatorhud", "1");
 	CvarSync_Set(clcvar_cl_spectatorkillfeed, "cl_spectatorkillfeed", "0");
+	CvarSync_Set(clcvar_cl_hdmode, "cl_hdmode", "1");
 #endif
 }
 

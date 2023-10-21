@@ -1354,6 +1354,8 @@ char *vtos (vec3_t v);
 
 float vectoyaw (vec3_t vec);
 void vectoangles (vec3_t vec, vec3_t angles);
+void vectoangles2(vec3_t angles, const vec3_t forward, const vec3_t up, qboolean flippitch);
+void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]);
 
 //
 // g_combat.c
@@ -1493,7 +1495,6 @@ void ChaseNext (edict_t * ent);
 void ChasePrev (edict_t * ent);
 void GetChaseTarget (edict_t * ent);
 
-
 //
 // g_spawn.c
 //
@@ -1507,6 +1508,7 @@ int Gamemode(void);
 #if USE_AQTION
 void generate_uuid();
 #endif
+
 //
 // p_client.c
 //
@@ -1532,6 +1534,19 @@ void P_ProjectSource(gclient_t *client, vec3_t point, vec3_t distance, vec3_t fo
 void weapon_grenade_fire(edict_t* ent, qboolean held);
 void InitTookDamage(void);
 void ProduceShotgunDamageReport(edict_t*);
+
+// Reki (April 23 2023)
+// g_hdmode.c
+//
+#define DIMENSION_HDMODE			(1 << 8)
+#define DIMENSION_VISUALNICEITIES	(1 << 9)
+#define HDMODE_ASSET		0x01 // this is an hd replacement, ignore this
+#define HDMODE_PLAYER		0x02
+void HDMode_HandleReplacements(void);
+void HDMode_PlayerL_State(edict_t *ent);
+void HDMode_PlayerL_Death(edict_t *ent);
+void HDMode_PlayerT_State(edict_t *ent);
+void HDMode_PlayerT_Death(edict_t *ent);
 
 //tng_stats.c
 void StatBotCheck(void);
@@ -1621,6 +1636,7 @@ typedef struct
 #ifdef AQTION_EXTENSION
 	int cl_xerp;
 	int cl_indicators;
+	int cl_hdmode;
 #endif
 
 	int mk23_mode;		// firing mode, semi or auto
@@ -2100,6 +2116,14 @@ struct edict_s
 	int			classnum;
 	int			typeNum;
 
+#ifdef AQTION_EXTENSION
+	//AQTION - Reki (April 23 2023): HD Mode
+	int			hdm_flags;
+	edict_t		*hdm_head;
+	edict_t		*hdm_torso;
+	edict_t		*hdm_legs;
+#endif
+
 #ifndef NO_BOTS
 	int old_health;
 
@@ -2336,6 +2360,7 @@ typedef enum {
 	clcvar_cl_xerp,
 	clcvar_cl_spectatorhud,
 	clcvar_cl_spectatorkillfeed,
+	clcvar_cl_hdmode,
 } clcvar_t;
 
 // UI flags from q2pro
